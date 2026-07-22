@@ -10,8 +10,8 @@ module.exports = {
         NODE_ENV: 'production'
       },
       max_memory_restart: '300M',
-      out_file: '/home/deploy/.pm2/logs/github-personality-api-out.log',
-      error_file: '/home/deploy/.pm2/logs/github-personality-api-error.log',
+      out_file: '/home/prahlad/.pm2/logs/github-personality-api-out.log',
+      error_file: '/home/prahlad/.pm2/logs/github-personality-api-error.log',
       time: true
     }
   ]
