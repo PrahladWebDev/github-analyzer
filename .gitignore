@@ -1,0 +1,59 @@
+node_modules/
+dist/
+.env
+*.log
+backend/.env# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment files
+.env
+.env.*
+frontend/.env
+backend/.env
+
+# Build output
+dist/
+build/
+frontend/dist/
+backend/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Optional package manager lock files (uncomment if you don't want to track them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

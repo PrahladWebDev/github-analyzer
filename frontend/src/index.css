@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-base: 13 17 23;
+  --color-panel: 22 27 34;
+  --color-border: 48 54 61;
+  --color-accent: 88 166 255;
+  --color-accent2: 63 185 80;
+  --color-ink: 236 239 244;
+}
+
+html.light {
+  --color-base: 255 255 255;
+  --color-panel: 246 248 250;
+  --color-border: 208 215 222;
+  --color-accent: 9 105 218;
+  --color-accent2: 26 127 55;
+  --color-ink: 31 35 40;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: rgb(var(--color-base));
+  color: rgb(var(--color-ink));
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.card {
+  @apply bg-panel border border-border rounded-xl p-5 shadow-sm;
+}
+
+.heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up {
+    animation: none;
+  }
+}
