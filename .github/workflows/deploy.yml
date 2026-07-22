@@ -1,0 +1,42 @@
+name: Deploy GitHub Analyzer
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into VPS and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            echo "=== Pulling latest code ==="
+            cd /home/prahlad/github-analyzer
+            git pull origin main
+
+            echo "=== Installing backend dependencies ==="
+            cd /home/prahlad/github-analyzer/backend
+            npm install --omit=dev
+
+            echo "=== Restarting API with PM2 ==="
+            pm2 reload github-personality-api --update-env
+
+            echo "=== Building frontend ==="
+            cd /home/prahlad/github-analyzer/frontend
+            npm install
+            npm run build
+
+            echo "=== Reloading Nginx ==="
+            sudo systemctl reload nginx
+
+            echo "=== Deploy status ==="
+            pm2 status
