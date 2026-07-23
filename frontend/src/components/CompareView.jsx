@@ -1,5 +1,15 @@
 import { useState } from 'react';
 import { compareUsers, getCompareVerdict, extractErrorMessage } from '../api';
+import ProgressLoader from './ProgressLoader';
+
+const COMPARE_STEPS = [
+  'Connecting to GitHub…',
+  'Extracting data for both profiles…',
+  'Crunching commit history…',
+  'Tallying stars, forks & followers…',
+  'Deciding a winner…',
+  'Wrapping things up…'
+];
 
 export default function CompareView() {
   const [userA, setUserA] = useState('');
@@ -54,6 +64,8 @@ export default function CompareView() {
           {loading ? 'Comparing…' : 'Compare'}
         </button>
       </form>
+
+      <ProgressLoader active={loading} label="Comparing profiles" steps={COMPARE_STEPS} />
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
