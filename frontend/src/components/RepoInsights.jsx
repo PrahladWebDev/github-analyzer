@@ -45,9 +45,9 @@ export default function RepoInsights({ repos, timeline }) {
               rel="noreferrer"
               className="block bg-base border border-border rounded-lg p-3 hover:border-accent transition"
             >
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{r.name}</span>
-                <span className="text-xs text-gray-400">{r.language}</span>
+              <div className="flex flex-wrap justify-between items-center gap-x-2 gap-y-1">
+                <span className="font-medium break-all">{r.name}</span>
+                <span className="text-xs text-gray-400 shrink-0">{r.language}</span>
               </div>
               {r.description && <p className="text-gray-400 text-sm mt-1">{r.description}</p>}
               <div className="flex gap-4 text-xs text-gray-500 mt-2">
