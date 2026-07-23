@@ -11,13 +11,49 @@
   --color-ink: 236 239 244;
 }
 
-html.light {
+html[data-theme='light'] {
   --color-base: 255 255 255;
   --color-panel: 246 248 250;
   --color-border: 208 215 222;
   --color-accent: 9 105 218;
   --color-accent2: 26 127 55;
   --color-ink: 31 35 40;
+}
+
+html[data-theme='dracula'] {
+  --color-base: 40 42 54;
+  --color-panel: 52 55 70;
+  --color-border: 68 71 90;
+  --color-accent: 189 147 249;
+  --color-accent2: 80 250 123;
+  --color-ink: 248 248 242;
+}
+
+html[data-theme='nord'] {
+  --color-base: 46 52 64;
+  --color-panel: 59 66 82;
+  --color-border: 76 86 106;
+  --color-accent: 136 192 208;
+  --color-accent2: 163 190 140;
+  --color-ink: 236 239 244;
+}
+
+html[data-theme='synthwave'] {
+  --color-base: 36 27 47;
+  --color-panel: 45 36 64;
+  --color-border: 77 59 99;
+  --color-accent: 255 126 219;
+  --color-accent2: 54 249 246;
+  --color-ink: 244 238 232;
+}
+
+html[data-theme='forest'] {
+  --color-base: 27 43 31;
+  --color-panel: 34 56 40;
+  --color-border: 52 80 58;
+  --color-accent: 127 191 127;
+  --color-accent2: 217 164 65;
+  --color-ink: 232 240 230;
 }
 
 body {
