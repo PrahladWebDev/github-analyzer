@@ -60,8 +60,8 @@ export default function CompareView() {
       {result && (
         <div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <CompareCol label={result.a.profile.login} data={result.a} />
-            <CompareCol label={result.b.profile.login} data={result.b} />
+            <CompareCol label={result.a.profile.login} data={result.a} verdict={getVerdict(result.a, result.b)} />
+            <CompareCol label={result.b.profile.login} data={result.b} verdict={getVerdict(result.b, result.a)} />
           </div>
           {verdict && <p className="text-gray-300 text-sm mt-4 italic">{verdict}</p>}
         </div>
@@ -70,9 +70,53 @@ export default function CompareView() {
   );
 }
 
-function CompareCol({ label, data }) {
+// Numeric categories used to decide the overall winner. Higher wins each one.
+const SCORE_FIELDS = [
+  { key: 'totalRepos', source: 'stats' },
+  { key: 'totalStars', source: 'stats' },
+  { key: 'totalForks', source: 'stats' },
+  { key: 'openSourceScore', source: 'stats' },
+  { key: 'followers', source: 'profile' }
+];
+
+function getVerdict(mine, theirs) {
+  let myWins = 0;
+  let theirWins = 0;
+  SCORE_FIELDS.forEach(({ key, source }) => {
+    const myVal = mine[source]?.[key] ?? 0;
+    const theirVal = theirs[source]?.[key] ?? 0;
+    if (myVal > theirVal) myWins += 1;
+    else if (theirVal > myVal) theirWins += 1;
+  });
+  if (myWins === theirWins) return 'draw';
+  return myWins > theirWins ? 'win' : 'lose';
+}
+
+function CompareCol({ label, data, verdict }) {
+  const stampStyles = {
+    win: 'border-green-500 text-green-400 rotate-[-8deg]',
+    lose: 'border-red-500 text-red-400 rotate-[-8deg]',
+    draw: null
+  };
+  const stampText = { win: 'WINNER', lose: 'LOSER', draw: null };
+
   return (
-    <div className="bg-base border border-border rounded-lg p-3">
+    <div
+      className={`relative overflow-hidden bg-base border rounded-lg p-3 ${
+        verdict === 'win'
+          ? 'border-green-500/60'
+          : verdict === 'lose'
+          ? 'border-red-500/40'
+          : 'border-border'
+      }`}
+    >
+      {stampText[verdict] && (
+        <span
+          className={`absolute top-2 right-2 border-2 rounded px-2 py-0.5 text-[10px] font-bold tracking-wider select-none ${stampStyles[verdict]}`}
+        >
+          {stampText[verdict]}
+        </span>
+      )}
       <div className="font-medium mb-2">@{label}</div>
       <Row k="Repos" v={data.stats.totalRepos} />
       <Row k="Stars" v={data.stats.totalStars} />
