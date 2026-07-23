@@ -193,6 +193,7 @@ async function analyzeUser(username, { deepLanguages = false } = {}) {
       forks: r.forks_count,
       language: r.language,
       updatedAt: r.updated_at,
+      createdAt: r.created_at,
       url: r.html_url,
       size: r.size
     }));
