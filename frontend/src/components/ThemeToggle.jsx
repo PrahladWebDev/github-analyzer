@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 
+const THEMES = [
+  { id: 'dark', label: '🌙 Dark' },
+  { id: 'light', label: '☀️ Light' },
+  { id: 'dracula', label: '🧛 Dracula' },
+  { id: 'nord', label: '❄️ Nord' },
+  { id: 'synthwave', label: '🌆 Synthwave' },
+  { id: 'forest', label: '🌲 Forest' }
+];
+
 function getInitialTheme() {
   const stored = localStorage.getItem('theme');
-  if (stored === 'light' || stored === 'dark') return stored;
+  if (stored && THEMES.some((t) => t.id === stored)) return stored;
   return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
@@ -10,17 +19,22 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('light', theme === 'light');
+    document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
   return (
-    <button
-      onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
-      title="Toggle light/dark theme"
-      className="text-sm bg-panel border border-border rounded-lg px-3 py-2 hover:border-accent transition"
+    <select
+      value={theme}
+      onChange={(e) => setTheme(e.target.value)}
+      title="Choose theme"
+      className="text-sm bg-panel border border-border rounded-lg px-3 py-2 hover:border-accent transition cursor-pointer"
     >
-      {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-    </button>
+      {THEMES.map((t) => (
+        <option key={t.id} value={t.id}>
+          {t.label}
+        </option>
+      ))}
+    </select>
   );
 }
