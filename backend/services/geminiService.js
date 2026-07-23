@@ -12,30 +12,39 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function requestOnce(model, prompt) {
+async function requestOnce(model, prompt, maxOutputTokens) {
   const endpoint = buildEndpoint(model);
   const { data } = await axios.post(
     endpoint,
     {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 500 }
+      generationConfig: { temperature: 0.8, maxOutputTokens }
     },
     { headers: { 'Content-Type': 'application/json' } }
   );
 
-  const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('\n');
+  const candidate = data?.candidates?.[0];
+  const text = candidate?.content?.parts?.map((p) => p.text).join('\n');
   if (!text) throw new Error('Gemini returned no content');
+
+  // If Gemini stopped because it hit the token cap mid-sentence, retry once with
+  // a larger budget so the response isn't cut off. Only worth doing once — if it
+  // still gets cut off at the higher cap something else is going on.
+  if (candidate?.finishReason === 'MAX_TOKENS' && maxOutputTokens < 2048) {
+    return requestOnce(model, prompt, maxOutputTokens * 2);
+  }
+
   return text.trim();
 }
 
 // Gemini's free tier frequently returns 503 "model overloaded" under high demand.
 // This is transient and almost always clears up within a few seconds, so retry
 // with exponential backoff + jitter before giving up.
-async function callGemini(prompt, { maxRetries = 3 } = {}) {
+async function callGemini(prompt, { maxRetries = 3, maxOutputTokens = 800 } = {}) {
   let delay = 800;
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
-      return await requestOnce(MODEL, prompt);
+      return await requestOnce(MODEL, prompt, maxOutputTokens);
     } catch (err) {
       const status = err.response?.status;
       const retriable = status === 503 || status === 429;
@@ -105,15 +114,16 @@ Return only the verdict text.`;
 }
 
 async function generateSummary(analysis) {
-  return callGemini(summaryPrompt(analysis));
+  // Personality + strengths + growth areas + role suggestion needs more headroom.
+  return callGemini(summaryPrompt(analysis), { maxOutputTokens: 1024 });
 }
 
 async function generateRoast(analysis) {
-  return callGemini(roastPrompt(analysis));
+  return callGemini(roastPrompt(analysis), { maxOutputTokens: 400 });
 }
 
 async function generateCompareVerdict(a, b) {
-  return callGemini(comparePrompt(a, b));
+  return callGemini(comparePrompt(a, b), { maxOutputTokens: 400 });
 }
 
 module.exports = { generateSummary, generateRoast, generateCompareVerdict };
