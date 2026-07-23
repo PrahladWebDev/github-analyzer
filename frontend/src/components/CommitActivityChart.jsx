@@ -60,7 +60,7 @@ export default function CommitActivityChart({ commitTimes }) {
         Based on sampled recent push events · {nightOwlRatio}% night owl · {earlyBirdRatio}% early bird ·{' '}
         {weekendRatio}% weekend
       </p>
-      <div className="grid sm:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6">
         <div>
           <div className="text-xs text-gray-400 mb-2">By hour of day (UTC)</div>
           <div style={{ height: 140 }}>
