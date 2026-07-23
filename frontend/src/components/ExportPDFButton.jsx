@@ -97,7 +97,7 @@ export default function ExportPDFButton({ data, summary }) {
         `Total Forks: ${stats.totalForks}`
       ];
       snapshot.forEach((line) => {
-        doc.text(`•  ${line}`, margin, y);
+        doc.text(`- ${line}`, margin, y);  // Changed bullet from • to -
         y += 15;
       });
       y += 8;
@@ -107,7 +107,8 @@ export default function ExportPDFButton({ data, summary }) {
         sectionTitle('Coding Personality');
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
-        const badgeText = badges.map((b) => `${b.icon} ${b.name}`).join('   ');
+        // Changed to remove emoji/icons - using bullet point instead
+        const badgeText = badges.map((b) => `• ${b.name}`).join('   ');
         const lines = doc.splitTextToSize(badgeText, pageWidth - margin * 2);
         doc.text(lines, margin, y);
         y += lines.length * 16 + 8;
@@ -159,7 +160,8 @@ export default function ExportPDFButton({ data, summary }) {
           doc.text(r.name, margin, y);
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(...gray);
-          doc.text(`⭐ ${r.stars}  ·  🍴 ${r.forks}  ·  ${r.language || '—'}`, pageWidth - margin - 160, y);
+          // Changed to remove emoji/icons and use plain text
+          doc.text(`Stars: ${r.stars} | Forks: ${r.forks} | ${r.language || '-'}`, pageWidth - margin - 180, y);
           doc.setTextColor(...ink);
           y += 14;
           if (r.description) {
