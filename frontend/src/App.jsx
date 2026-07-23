@@ -12,6 +12,7 @@ import CompareView from './components/CompareView';
 import ShareSummary from './components/ShareSummary';
 import ExportImageButton from './components/ExportImageButton';
 import ThemeToggle from './components/ThemeToggle';
+import ProgressLoader from './components/ProgressLoader';
 import RecentSearches, { addRecentSearch } from './components/RecentSearches';
 import ThreeBackground from './components/ThreeBackground';
 
@@ -105,6 +106,8 @@ export default function App() {
             </form>
 
             <RecentSearches onSelect={handleRecentSelect} refreshKey={recentRefreshKey} />
+
+            <ProgressLoader active={loading} label="Analyzing profile" />
 
             {error && (
               <div className="card border-red-900 bg-red-950/30 text-red-300 text-sm">{error}</div>
