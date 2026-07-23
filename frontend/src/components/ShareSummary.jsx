@@ -43,6 +43,21 @@ export default function ShareSummary({ data }) {
   const [failed, setFailed] = useState(false);
   const [mdCopied, setMdCopied] = useState(false);
   const [mdFailed, setMdFailed] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [linkFailed, setLinkFailed] = useState(false);
+
+  async function handleCopyLink() {
+    const url = `${window.location.origin}/profile/${data.profile.login}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setLinkFailed(false);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setLinkFailed(true);
+      setTimeout(() => setLinkFailed(false), 2000);
+    }
+  }
 
   async function handleCopy() {
     const text = buildSummaryText(data);
@@ -71,7 +86,14 @@ export default function ShareSummary({ data }) {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={handleCopyLink}
+        title="Copy a shareable link to this profile"
+        className="text-xs bg-panel border border-border rounded-lg px-3 py-1.5 hover:border-accent transition text-gray-300 shrink-0"
+      >
+        {linkCopied ? '✅ Link copied!' : linkFailed ? '⚠️ Copy failed' : '🔗 Copy share link'}
+      </button>
       <button
         onClick={handleCopy}
         className="text-xs bg-panel border border-border rounded-lg px-3 py-1.5 hover:border-accent transition text-gray-300 shrink-0"
