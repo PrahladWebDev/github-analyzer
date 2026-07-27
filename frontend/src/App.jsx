@@ -17,7 +17,7 @@ import ThemeToggle from './components/ThemeToggle';
 import ProgressLoader from './components/ProgressLoader';
 import RecentSearches, { addRecentSearch } from './components/RecentSearches';
 import ThreeBackground from './components/ThreeBackground';
-
+import PWAStatus from './components/PWAStatus';
 // A handful of well-known accounts to seed the autocomplete dropdown before
 // the user has any recent searches of their own.
 const SUGGESTED_USERS = ['torvalds', 'gaearon', 'sindresorhus', 'tj', 'JakeWharton'];
@@ -199,6 +199,7 @@ export default function App() {
           </>
         )}
       </main>
+      <PWAStatus />
     </div>
   );
 }
