@@ -104,11 +104,17 @@ Repo names sample: ${repoNames || 'none available'}
 Return only the roast text, no preamble.`;
 }
 
-function comparePrompt(a, b) {
-  return `Compare two GitHub developers based on this data and give a short, fun, even-handed 3-sentence verdict on their differing strengths. Do not declare one strictly "better" as a person — compare working styles only.
+function scorecardLine(analysis) {
+  const c = analysis.scorecard?.categories || [];
+  const byKey = Object.fromEntries(c.map((x) => [x.key, x.score]));
+  return `Code Quality ${byKey.codeQuality ?? 'n/a'}, Consistency ${byKey.consistency ?? 'n/a'}, Learning ${byKey.learning ?? 'n/a'}, Collaboration ${byKey.collaboration ?? 'n/a'}, Activity ${byKey.activity ?? 'n/a'}, Complexity ${byKey.complexity ?? 'n/a'}`;
+}
 
-Developer A (${a.profile.login}): ${a.stats.totalStars} stars, ${a.profile.followers} followers, ${a.stats.totalRepos} repos, doc grade ${a.stats.documentationGrade}, top language ${a.languages[0]?.language || 'n/a'}.
-Developer B (${b.profile.login}): ${b.stats.totalStars} stars, ${b.profile.followers} followers, ${b.stats.totalRepos} repos, doc grade ${b.stats.documentationGrade}, top language ${b.languages[0]?.language || 'n/a'}.
+function comparePrompt(a, b) {
+  return `Compare two GitHub developers based on this data and give a short, fun, even-handed 3-sentence verdict on their differing working styles. Reference their archetypes and their strongest scorecard categories specifically (e.g. "Developer A is more backend-oriented and consistent, while Developer B shows greater open-source collaboration"). Do not declare one strictly "better" as a person.
+
+Developer A (${a.profile.login}): archetype "${a.scorecard?.archetype?.name || 'n/a'}", overall score ${a.scorecard?.overall ?? 'n/a'}/100. Scorecard — ${scorecardLine(a)}. ${a.stats.totalStars} stars, ${a.profile.followers} followers, ${a.stats.totalRepos} repos, top language ${a.languages[0]?.language || 'n/a'}.
+Developer B (${b.profile.login}): archetype "${b.scorecard?.archetype?.name || 'n/a'}", overall score ${b.scorecard?.overall ?? 'n/a'}/100. Scorecard — ${scorecardLine(b)}. ${b.stats.totalStars} stars, ${b.profile.followers} followers, ${b.stats.totalRepos} repos, top language ${b.languages[0]?.language || 'n/a'}.
 
 Return only the verdict text.`;
 }
