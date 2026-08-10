@@ -6,10 +6,33 @@ const COMPARE_STEPS = [
   'Connecting to GitHub…',
   'Extracting data for both profiles…',
   'Crunching commit history…',
-  'Tallying stars, forks & followers…',
+  'Scoring both scorecards…',
   'Deciding a winner…',
   'Wrapping things up…'
 ];
+
+// Rows shown in the comparison table, in display order.
+// `get` pulls the display value; `winner` (optional) pulls a comparable
+// numeric value used to highlight whichever side is ahead on that row.
+const ROWS = [
+  { label: 'Overall Score', get: (d) => `${d.scorecard?.overall ?? 'n/a'}/100`, winner: (d) => d.scorecard?.overall ?? 0 },
+  { label: 'Archetype', get: (d) => `${d.scorecard?.archetype?.icon || ''} ${d.scorecard?.archetype?.name || 'n/a'}` },
+  { label: 'Contributions', hint: 'Sampled recent pushes (last ~90 days of public activity)', get: (d) => d.commitTimes.totalSampledPushes, winner: (d) => d.commitTimes.totalSampledPushes },
+  { label: 'Repositories', get: (d) => d.stats.totalRepos, winner: (d) => d.stats.totalRepos },
+  { label: 'Languages', get: (d) => d.languages.length, winner: (d) => d.languages.length },
+  { label: 'Stars', get: (d) => d.stats.totalStars, winner: (d) => d.stats.totalStars },
+  { label: 'Followers', get: (d) => d.profile.followers, winner: (d) => d.profile.followers },
+  { label: '🧠 Code Quality', get: (d) => scoreOf(d, 'codeQuality'), winner: (d) => scoreOf(d, 'codeQuality') },
+  { label: '🔥 Consistency', get: (d) => scoreOf(d, 'consistency'), winner: (d) => scoreOf(d, 'consistency') },
+  { label: '📚 Learning', get: (d) => scoreOf(d, 'learning'), winner: (d) => scoreOf(d, 'learning') },
+  { label: '🤝 Collaboration', get: (d) => scoreOf(d, 'collaboration'), winner: (d) => scoreOf(d, 'collaboration') },
+  { label: '🚀 Activity', get: (d) => scoreOf(d, 'activity'), winner: (d) => scoreOf(d, 'activity') },
+  { label: '🛠️ Complexity', get: (d) => scoreOf(d, 'complexity'), winner: (d) => scoreOf(d, 'complexity') }
+];
+
+function scoreOf(data, key) {
+  return data.scorecard?.categories?.find((c) => c.key === key)?.score ?? 0;
+}
 
 export default function CompareView() {
   const [userA, setUserA] = useState('');
@@ -71,81 +94,42 @@ export default function CompareView() {
 
       {result && (
         <div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <CompareCol label={result.a.profile.login} data={result.a} verdict={getVerdict(result.a, result.b)} />
-            <CompareCol label={result.b.profile.login} data={result.b} verdict={getVerdict(result.b, result.a)} />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse min-w-[420px]">
+              <thead>
+                <tr className="text-left text-gray-400 border-b border-border">
+                  <th className="py-2 pr-3 font-medium">Category</th>
+                  <th className="py-2 px-3 font-medium">@{result.a.profile.login}</th>
+                  <th className="py-2 pl-3 font-medium">@{result.b.profile.login}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map((row) => {
+                  const valA = row.get(result.a);
+                  const valB = row.get(result.b);
+                  const numA = row.winner ? row.winner(result.a) : null;
+                  const numB = row.winner ? row.winner(result.b) : null;
+                  const aWins = row.winner && numA > numB;
+                  const bWins = row.winner && numB > numA;
+                  return (
+                    <tr key={row.label} className="border-b border-border/60" title={row.hint}>
+                      <td className="py-2 pr-3 text-gray-400">{row.label}</td>
+                      <td className={`py-2 px-3 ${aWins ? 'text-accent2 font-semibold' : 'text-gray-200'}`}>{valA}</td>
+                      <td className={`py-2 pl-3 ${bWins ? 'text-accent2 font-semibold' : 'text-gray-200'}`}>{valB}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          {verdict && <p className="text-gray-300 text-sm mt-4 italic">{verdict}</p>}
+
+          {verdict && (
+            <p className="text-gray-300 text-sm mt-4 italic border-t border-border pt-4">
+              🤖 {verdict}
+            </p>
+          )}
         </div>
       )}
-    </div>
-  );
-}
-
-// Numeric categories used to decide the overall winner. Higher wins each one.
-const SCORE_FIELDS = [
-  { key: 'totalRepos', source: 'stats' },
-  { key: 'totalStars', source: 'stats' },
-  { key: 'totalForks', source: 'stats' },
-  { key: 'openSourceScore', source: 'stats' },
-  { key: 'followers', source: 'profile' }
-];
-
-function getVerdict(mine, theirs) {
-  let myWins = 0;
-  let theirWins = 0;
-  SCORE_FIELDS.forEach(({ key, source }) => {
-    const myVal = mine[source]?.[key] ?? 0;
-    const theirVal = theirs[source]?.[key] ?? 0;
-    if (myVal > theirVal) myWins += 1;
-    else if (theirVal > myVal) theirWins += 1;
-  });
-  if (myWins === theirWins) return 'draw';
-  return myWins > theirWins ? 'win' : 'lose';
-}
-
-function CompareCol({ label, data, verdict }) {
-  const stampStyles = {
-    win: 'border-green-500 text-green-400 rotate-[-8deg]',
-    lose: 'border-red-500 text-red-400 rotate-[-8deg]',
-    draw: null
-  };
-  const stampText = { win: 'WINNER', lose: 'LOSER', draw: null };
-
-  return (
-    <div
-      className={`relative overflow-hidden bg-base border rounded-lg p-3 ${
-        verdict === 'win'
-          ? 'border-green-500/60'
-          : verdict === 'lose'
-          ? 'border-red-500/40'
-          : 'border-border'
-      }`}
-    >
-      {stampText[verdict] && (
-        <span
-          className={`absolute top-2 right-2 border-2 rounded px-2 py-0.5 text-[10px] font-bold tracking-wider select-none ${stampStyles[verdict]}`}
-        >
-          {stampText[verdict]}
-        </span>
-      )}
-      <div className="font-medium mb-2">@{label}</div>
-      <Row k="Repos" v={data.stats.totalRepos} />
-      <Row k="Stars" v={data.stats.totalStars} />
-      <Row k="Forks" v={data.stats.totalForks} />
-      <Row k="Followers" v={data.profile.followers} />
-      <Row k="Top language" v={data.languages[0]?.language || 'n/a'} />
-      <Row k="Doc grade" v={data.stats.documentationGrade} />
-      <Row k="OSS score" v={`${data.stats.openSourceScore}/100`} />
-    </div>
-  );
-}
-
-function Row({ k, v }) {
-  return (
-    <div className="flex justify-between text-gray-400 py-0.5">
-      <span>{k}</span>
-      <span className="text-gray-200">{v}</span>
     </div>
   );
 }
