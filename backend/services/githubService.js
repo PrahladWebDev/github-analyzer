@@ -88,6 +88,55 @@ async function getLanguagesForRepo(fullName) {
   });
 }
 
+// Parses the `rel="last"` page number out of a GitHub pagination Link header.
+// Used to cheaply estimate a total count (contributors, releases) via
+// per_page=1 requests instead of pulling every page.
+function parseLastPage(linkHeader) {
+  if (!linkHeader) return null;
+  const match = linkHeader.match(/[?&]page=(\d+)>;\s*rel="last"/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+async function getRepoContributorsCount(fullName) {
+  return cached(`contributors:${fullName}`, async () => {
+    try {
+      const res = await gh.get(`/repos/${fullName}/contributors`, {
+        params: { per_page: 1, anon: true }
+      });
+      const last = parseLastPage(res.headers.link);
+      if (last) return last;
+      return Array.isArray(res.data) ? res.data.length : 1;
+    } catch (e) {
+      // 204 = empty repo, 403 = stats not computed yet; degrade gracefully
+      return null;
+    }
+  });
+}
+
+async function getRepoReadmeInfo(fullName) {
+  return cached(`readme:${fullName}`, async () => {
+    try {
+      const { data } = await gh.get(`/repos/${fullName}/readme`);
+      return { exists: true, size: data.size || 0 };
+    } catch (e) {
+      return { exists: false, size: 0 };
+    }
+  });
+}
+
+async function getReleasesCount(fullName) {
+  return cached(`releases:${fullName}`, async () => {
+    try {
+      const res = await gh.get(`/repos/${fullName}/releases`, { params: { per_page: 1 } });
+      const last = parseLastPage(res.headers.link);
+      if (last) return last;
+      return Array.isArray(res.data) ? res.data.length : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+}
+
 async function getIssueCounts(username) {
   // Uses the Search API to approximate bug-fix ratio and PR activity.
   return cached(`issues:${username}`, async () => {
@@ -110,5 +159,8 @@ module.exports = {
   getOrganizations,
   getPublicEvents,
   getLanguagesForRepo,
-  getIssueCounts
+  getIssueCounts,
+  getRepoContributorsCount,
+  getRepoReadmeInfo,
+  getReleasesCount
 };
