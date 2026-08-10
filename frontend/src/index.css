@@ -93,3 +93,90 @@ body {
     animation: none;
   }
 }
+
+/* Compare table: rows sliding in from left/right, one row at a time */
+@keyframes cell-in-left {
+  from { opacity: 0; transform: translateX(-22px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes cell-in-right {
+  from { opacity: 0; transform: translateX(22px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes label-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cell-in-left {
+  animation: cell-in-left 0.35s ease-out both;
+}
+.cell-in-right {
+  animation: cell-in-right 0.35s ease-out both;
+}
+.label-in {
+  animation: label-in 0.35s ease-out both;
+}
+
+/* Compare table: avatars popping in once the table has finished filling */
+@keyframes avatar-pop {
+  0% { opacity: 0; transform: scale(0.4) translateY(10px); }
+  60% { opacity: 1; transform: scale(1.08) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.avatar-pop {
+  animation: avatar-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Compare table: winner / loser stamps, rubber-stamped in 3D over the
+   avatars. Positioned to poke above the table without ever covering it. */
+@keyframes stamp-in-left {
+  0% { opacity: 0; transform: translateX(-50%) scale(2.2) rotate(0deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(-10deg); }
+}
+@keyframes stamp-in-right {
+  0% { opacity: 0; transform: translateX(-50%) scale(2.2) rotate(0deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(10deg); }
+}
+.stamp {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 2px solid currentColor;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.25);
+  backdrop-filter: blur(1px);
+}
+.stamp-left {
+  animation: stamp-in-left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.stamp-right {
+  animation: stamp-in-right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.stamp-winner {
+  color: rgb(var(--color-accent2));
+  background: rgb(var(--color-accent2) / 0.15);
+}
+.stamp-loser {
+  color: rgb(var(--color-ink) / 0.55);
+  background: rgb(var(--color-panel) / 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell-in-left,
+  .cell-in-right,
+  .label-in,
+  .avatar-pop,
+  .stamp-left,
+  .stamp-right {
+    animation: none;
+  }
+}
