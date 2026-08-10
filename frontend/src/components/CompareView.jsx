@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { compareUsers, getCompareVerdict, extractErrorMessage } from '../api';
 import ProgressLoader from './ProgressLoader';
 
@@ -30,6 +30,11 @@ const ROWS = [
   { label: '🛠️ Complexity', get: (d) => scoreOf(d, 'complexity'), winner: (d) => scoreOf(d, 'complexity') }
 ];
 
+// Timing for the staggered reveal animation (ms).
+const ROW_STAGGER_MS = 130;
+const AVATAR_DELAY_MS = 250;
+const STAMP_DELAY_MS = 550;
+
 function scoreOf(data, key) {
   return data.scorecard?.categories?.find((c) => c.key === key)?.score ?? 0;
 }
@@ -41,6 +46,34 @@ export default function CompareView() {
   const [verdict, setVerdict] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Reveal-animation state: how many rows are mounted, and whether the
+  // avatar row / winner-loser stamps have appeared yet.
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [showAvatars, setShowAvatars] = useState(false);
+  const [showStamps, setShowStamps] = useState(false);
+
+  useEffect(() => {
+    if (!result) {
+      setVisibleRows(0);
+      setShowAvatars(false);
+      setShowStamps(false);
+      return;
+    }
+    setVisibleRows(0);
+    setShowAvatars(false);
+    setShowStamps(false);
+
+    const timers = [];
+    ROWS.forEach((_, i) => {
+      timers.push(setTimeout(() => setVisibleRows((c) => Math.max(c, i + 1)), i * ROW_STAGGER_MS));
+    });
+    const rowsDone = ROWS.length * ROW_STAGGER_MS;
+    timers.push(setTimeout(() => setShowAvatars(true), rowsDone + AVATAR_DELAY_MS));
+    timers.push(setTimeout(() => setShowStamps(true), rowsDone + AVATAR_DELAY_MS + STAMP_DELAY_MS));
+
+    return () => timers.forEach(clearTimeout);
+  }, [result]);
 
   async function handleCompare(e) {
     e.preventDefault();
@@ -61,6 +94,12 @@ export default function CompareView() {
       setLoading(false);
     }
   }
+
+  const overallA = result?.a?.scorecard?.overall ?? 0;
+  const overallB = result?.b?.scorecard?.overall ?? 0;
+  const isTie = result ? overallA === overallB : false;
+  const aIsWinner = result ? overallA > overallB : false;
+  const bIsWinner = result ? overallB > overallA : false;
 
   return (
     <div className="card">
@@ -94,33 +133,69 @@ export default function CompareView() {
 
       {result && (
         <div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse min-w-[420px]">
-              <thead>
-                <tr className="text-left text-gray-400 border-b border-border">
-                  <th className="py-2 pr-3 font-medium">Category</th>
-                  <th className="py-2 px-3 font-medium">@{result.a.profile.login}</th>
-                  <th className="py-2 pl-3 font-medium">@{result.b.profile.login}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ROWS.map((row) => {
-                  const valA = row.get(result.a);
-                  const valB = row.get(result.b);
-                  const numA = row.winner ? row.winner(result.a) : null;
-                  const numB = row.winner ? row.winner(result.b) : null;
-                  const aWins = row.winner && numA > numB;
-                  const bWins = row.winner && numB > numA;
-                  return (
-                    <tr key={row.label} className="border-b border-border/60" title={row.hint}>
-                      <td className="py-2 pr-3 text-gray-400">{row.label}</td>
-                      <td className={`py-2 px-3 ${aWins ? 'text-accent2 font-semibold' : 'text-gray-200'}`}>{valA}</td>
-                      <td className={`py-2 pl-3 ${bWins ? 'text-accent2 font-semibold' : 'text-gray-200'}`}>{valB}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Avatar row: appears once the table has finished filling in.
+              Positioned above the table so the winner/loser stamps can pop
+              out over the top edge without ever covering the table rows. */}
+          <div className="relative" style={{ overflow: 'visible' }}>
+            {showAvatars && (
+              <div className="flex items-start justify-around px-2 pb-2 relative" style={{ overflow: 'visible' }}>
+                <div className="relative flex flex-col items-center gap-1 avatar-pop">
+                  <img
+                    src={result.a.profile.avatarUrl}
+                    alt={result.a.profile.login}
+                    className="w-14 h-14 rounded-full border-2 border-border object-cover"
+                  />
+                  <span className="text-xs text-gray-400">@{result.a.profile.login}</span>
+                  {showStamps && !isTie && (
+                    <span className={`stamp stamp-left ${aIsWinner ? 'stamp-winner' : 'stamp-loser'}`}>
+                      {aIsWinner ? 'WINNER' : 'LOSER'}
+                    </span>
+                  )}
+                </div>
+                <div className="relative flex flex-col items-center gap-1 avatar-pop" style={{ animationDelay: '120ms' }}>
+                  <img
+                    src={result.b.profile.avatarUrl}
+                    alt={result.b.profile.login}
+                    className="w-14 h-14 rounded-full border-2 border-border object-cover"
+                  />
+                  <span className="text-xs text-gray-400">@{result.b.profile.login}</span>
+                  {showStamps && !isTie && (
+                    <span className={`stamp stamp-right ${bIsWinner ? 'stamp-winner' : 'stamp-loser'}`}>
+                      {bIsWinner ? 'WINNER' : 'LOSER'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="overflow-x-auto" style={{ overflowY: 'visible' }}>
+              <table className="w-full text-sm border-collapse min-w-[420px]">
+                <thead>
+                  <tr className="text-left text-gray-400 border-b border-border">
+                    <th className="py-2 pr-3 font-medium">Category</th>
+                    <th className="py-2 px-3 font-medium">@{result.a.profile.login}</th>
+                    <th className="py-2 pl-3 font-medium">@{result.b.profile.login}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ROWS.slice(0, visibleRows).map((row) => {
+                    const valA = row.get(result.a);
+                    const valB = row.get(result.b);
+                    const numA = row.winner ? row.winner(result.a) : null;
+                    const numB = row.winner ? row.winner(result.b) : null;
+                    const aWins = row.winner && numA > numB;
+                    const bWins = row.winner && numB > numA;
+                    return (
+                      <tr key={row.label} className="border-b border-border/60" title={row.hint}>
+                        <td className="py-2 pr-3 text-gray-400 label-in">{row.label}</td>
+                        <td className={`py-2 px-3 cell-in-left ${aWins ? 'text-accent2 font-semibold' : 'text-gray-200'}`}>{valA}</td>
+                        <td className={`py-2 pl-3 cell-in-right ${bWins ? 'text-accent2 font-semibold' : 'text-gray-200'}`}>{valB}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {verdict && (
