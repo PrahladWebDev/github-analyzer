@@ -1,4 +1,7 @@
 const github = require('./githubService');
+const { enrichTopRepos } = require('./repoIntelligence');
+const { computeScorecard } = require('./scoreEngine');
+const { buildTechEvolution } = require('./techEvolution');
 
 /**
  * Aggregates language bytes across a user's non-fork repos.
@@ -195,12 +198,34 @@ async function analyzeUser(username, { deepLanguages = false } = {}) {
       updatedAt: r.updated_at,
       createdAt: r.created_at,
       url: r.html_url,
-      size: r.size
+      size: r.size,
+      openIssues: r.open_issues_count,
+      pushedAt: r.pushed_at
     }));
 
   const firstRepo = [...repos].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
 
   const badges = computeBadges({ commitTimes, languages, repos, docGrade: doc, issues, longestStreak: heatmap.longestStreak });
+
+  // Repository Intelligence: enrich the top repos with contributors, README,
+  // and release data, then compute a 0-100 health score for each.
+  const enrichedTopRepos = await enrichTopRepos(topRepos);
+
+  // Developer Scorecard: 6-category score + overall + explanation + archetype.
+  const scorecard = computeScorecard({
+    profile,
+    repos,
+    languages,
+    commitTimes,
+    heatmap,
+    issues,
+    orgs,
+    topRepos: enrichedTopRepos,
+    doc
+  });
+
+  // Tech evolution: dominant language/category per account year.
+  const techEvolution = buildTechEvolution(repos);
 
   return {
     profile,
@@ -216,11 +241,13 @@ async function analyzeUser(username, { deepLanguages = false } = {}) {
     languages,
     commitTimes,
     heatmap,
-    topRepos,
+    topRepos: enrichedTopRepos,
     timeline: {
       firstRepo: firstRepo ? { name: firstRepo.name, createdAt: firstRepo.created_at, url: firstRepo.html_url } : null
     },
-    badges
+    badges,
+    scorecard,
+    techEvolution
   };
 }
 
