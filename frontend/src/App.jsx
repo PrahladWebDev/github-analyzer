@@ -8,6 +8,8 @@ import CommitActivityChart from './components/CommitActivityChart';
 import PersonalityRadar from './components/PersonalityRadar';
 import RepoInsights from './components/RepoInsights';
 import CareerTimeline from './components/CareerTimeline';
+import ScoreCard from './components/ScoreCard';
+import TechEvolutionTimeline from './components/TechEvolutionTimeline';
 import AISummary from './components/AISummary';
 import CompareView from './components/CompareView';
 import ShareSummary from './components/ShareSummary';
@@ -174,8 +176,10 @@ export default function App() {
                   <ExportImageButton targetRef={reportRef} filename={`${data.profile.login}-github-personality`} />
                   <ExportPDFButton data={data} summary={summary} />
                 </div>
+                <div className="fade-in-up"><ScoreCard scorecard={data.scorecard} /></div>
                 <div className="fade-in-up"><BadgeList badges={data.badges} stats={data.stats} /></div>
                 <div className="fade-in-up"><AISummary username={data.profile.login} summary={summary} loadingSummary={loadingSummary} /></div>
+                <div className="fade-in-up"><TechEvolutionTimeline techEvolution={data.techEvolution} /></div>
                 <div className="fade-in-up">
                   <CareerTimeline profile={data.profile} timeline={data.timeline} topRepos={data.topRepos} stats={data.stats} />
                 </div>
