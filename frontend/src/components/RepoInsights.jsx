@@ -30,6 +30,33 @@ function getRepoTags(repo) {
   return tags;
 }
 
+function healthColor(score) {
+  if (score >= 80) return 'text-accent2 border-accent2/40';
+  if (score >= 60) return 'text-accent border-accent/40';
+  if (score >= 40) return 'text-yellow-400 border-yellow-400/40';
+  return 'text-red-400 border-red-400/40';
+}
+
+function HealthBadge({ health }) {
+  if (!health) return null;
+  return (
+    <span
+      title={[
+        `Popularity ${health.breakdown.popularity}`,
+        `Freshness ${health.breakdown.freshness}`,
+        `Community ${health.breakdown.community}`,
+        `Issue hygiene ${health.breakdown.issueHygiene}`,
+        `Documentation ${health.breakdown.documentation}`,
+        `Maturity ${health.breakdown.maturity}`,
+        `Shipping ${health.breakdown.shipping}`
+      ].join(' · ')}
+      className={`shrink-0 border rounded-full px-2 py-0.5 text-[11px] font-semibold ${healthColor(health.score)}`}
+    >
+      Health {health.score}/100
+    </span>
+  );
+}
+
 export default function RepoInsights({ repos, timeline }) {
   return (
     <div className="card">
@@ -47,12 +74,17 @@ export default function RepoInsights({ repos, timeline }) {
             >
               <div className="flex flex-wrap justify-between items-center gap-x-2 gap-y-1">
                 <span className="font-medium break-all">{r.name}</span>
-                <span className="text-xs text-gray-400 shrink-0">{r.language}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-gray-400">{r.language}</span>
+                  <HealthBadge health={r.health} />
+                </div>
               </div>
               {r.description && <p className="text-gray-400 text-sm mt-1">{r.description}</p>}
-              <div className="flex gap-4 text-xs text-gray-500 mt-2">
+              <div className="flex flex-wrap gap-4 text-xs text-gray-500 mt-2">
                 <span>⭐ {r.stars}</span>
                 <span>🍴 {r.forks}</span>
+                {r.health && <span>👥 {r.health.contributors ?? '?'} contributor{r.health.contributors === 1 ? '' : 's'}</span>}
+                {r.health && <span>🏷️ {r.health.releases} release{r.health.releases === 1 ? '' : 's'}</span>}
                 <span>Updated {new Date(r.updatedAt).toLocaleDateString()}</span>
               </div>
               {tags.length > 0 && (
