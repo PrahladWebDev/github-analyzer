@@ -1,12 +1,14 @@
 import { useState } from 'react';
 
 function buildSummaryText(data) {
-  const { profile, stats, badges, languages } = data;
+  const { profile, stats, badges, languages, scorecard } = data;
   const topLangs = languages.slice(0, 3).map((l) => `${l.language} (${l.percentage}%)`).join(', ');
   const badgeLine = badges.map((b) => `${b.icon} ${b.name}`).join(' · ');
+  const scoreLine = scorecard ? `Developer Profile Score: ${scorecard.overall}/100 (${scorecard.archetype.icon} ${scorecard.archetype.name})` : null;
 
   return [
-    `GitHub Personality Report — @${profile.login}`,
+    `GitHub Developer Report — @${profile.login}`,
+    scoreLine,
     `${profile.followers} followers · ${stats.totalRepos} repos · ${stats.totalStars} stars`,
     topLangs ? `Top languages: ${topLangs}` : null,
     badgeLine ? `Badges: ${badgeLine}` : null,
@@ -18,12 +20,23 @@ function buildSummaryText(data) {
 }
 
 function buildSummaryMarkdown(data) {
-  const { profile, stats, badges, languages } = data;
+  const { profile, stats, badges, languages, scorecard } = data;
   const topLangs = languages.slice(0, 5).map((l) => `\`${l.language}\` ${l.percentage}%`).join(' · ');
   const badgeLines = badges.map((b) => `- ${b.icon} **${b.name}**${b.detail ? ` — ${b.detail}` : ''}`).join('\n');
+  const categoryLines = scorecard
+    ? scorecard.categories.map((c) => `- ${c.icon} ${c.label}: **${c.score}**/100`).join('\n')
+    : null;
 
   return [
-    `### 🧬 GitHub Personality — [@${profile.login}](https://github.com/${profile.login})`,
+    `### 🧬 GitHub Developer Report — [@${profile.login}](https://github.com/${profile.login})`,
+    '',
+    scorecard
+      ? `**Developer Profile Score: ${scorecard.overall}/100** — ${scorecard.archetype.icon} ${scorecard.archetype.name}`
+      : null,
+    scorecard ? scorecard.explanation : null,
+    '',
+    categoryLines ? '**Scorecard:**' : null,
+    categoryLines || null,
     '',
     `${profile.followers} followers · ${stats.totalRepos} repos · ⭐ ${stats.totalStars} stars · 📖 Docs: ${stats.documentationGrade} · 🧠 OSS Score: ${stats.openSourceScore}/100`,
     '',
